@@ -30,13 +30,6 @@
   <title>buildexpousa</title>
   <link rel="manifest" href="manifest.json">
 
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = "2858677476" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */;
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer=""></script>
-  
   
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
   
@@ -112,10 +105,43 @@
     }
   </style>
   <script id="splash-screen-script">
+    const coneCameraStreams = new Set();
+    const coneCameraVideos = new Set();
+
     function removeSplashFromWeb() {
       document.getElementById("splash")?.remove();
       document.getElementById("splash-branding")?.remove();
       document.body.style.background = "transparent";
+    }
+
+    function trackConeCameraStreams() {
+      document.querySelectorAll("video").forEach((video) => {
+        const stream = video.srcObject;
+        if (stream && typeof stream.getTracks === "function") {
+          coneCameraVideos.add(video);
+          coneCameraStreams.add(stream);
+        }
+      });
+    }
+
+    function stopConeCameraStreams() {
+      trackConeCameraStreams();
+
+      coneCameraVideos.forEach((video) => {
+        try {
+          video.pause();
+          video.srcObject = null;
+        } catch (_) {}
+      });
+
+      coneCameraStreams.forEach((stream) => {
+        try {
+          stream.getTracks().forEach((track) => track.stop());
+        } catch (_) {}
+      });
+
+      coneCameraVideos.clear();
+      coneCameraStreams.clear();
     }
   </script>
 </head>
@@ -132,21 +158,7 @@
   
   
   
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
-  </script>
+  <script src="flutter_bootstrap.js" async></script>
 
 
 </body></html>
